@@ -1,35 +1,38 @@
-# Tank 300 — Yandex Music AutoPlay skip fix
+# Tank 300 — Яндекс Музыка: руль и пропуск ИИ-треков
 
-Fix for **double next/previous track** when using steering-wheel media buttons on **Tank 300 / GWM V3** head units.
+Патч Яндекс Музыки Auto (autoPlay) для головных устройств **Tank 300 / GWM V3**.
 
-## What was wrong
+## Двойное переключение с руля
 
-The HU firmware often sends a duplicate media-button signal. Track skip was handled by the **Media3** session (`androidx.media3.session`), not the older `MediaSessionCompat` callback path — so earlier debounce attempts there did nothing.
+Прошивка ГУ часто посылает команду медиакнопки дважды. Следующий и предыдущий трек обрабатывает сессия **Media3** (`androidx.media3.session`), а не старый `MediaSessionCompat`, поэтому прежняя задержка на том пути ничего не меняла.
 
-## What this patch does
+В `androidx/media3/session/u.smali` стоит пауза **1000 мс**:
 
-Adds a **1000 ms debounce** in Media3 session callback:
+- `extends()` — следующий трек
+- `finally()` — предыдущий трек
 
-- File: `androidx/media3/session/u.smali`
-- Methods: `extends()` (skip next), `finally()` (skip previous)
-- Duplicate presses within 1 second are ignored
+Повторное нажатие в течение секунды игнорируется. На старом пути (`a79$g`, `xz8`) задержка тоже оставлена.
 
-Also keeps related debounce on the legacy path (`a79$g`, `xz8`) as a safety net.
+## Пропуск ИИ-музыки
 
-## Install
+Трек **не** определяется по названию. Берётся каталожный id и запрос `credits`. Если в ответе есть поле «Использование ИИ» или «AI use», трек пропускается.
 
-1. Uninstall the previous Yandex Music Auto / autoPlay build if the signing key differs.
-2. Install the APK from [Releases](https://github.com/virtusjit/tank300-alfa-devil-autoplay-skip-fix/releases).
+В разделе **Дополнительные настройки** есть пункт **Пропускать ИИ музыку**. По умолчанию он включён. Если снять галочку, автопропуск останавливается.
 
-Signed with a debug keystore (`*-aligned-debugSigned.apk`).
+## Установка
 
-## Credits
+1. Если подпись отличается, удалите прошлую сборку Яндекс Музыки Auto / autoPlay.
+2. Поставьте APK из [релизов](https://github.com/virtusjit/tank300-alfa-devil-autoplay-skip-fix/releases).
 
-- Base mod: **[Яндекс Музыка для ГУ на Андроид (autoPlay)](https://4pda.to/forum/index.php?showtopic=1116072)** by **Alfa_devil**  
-  Build used: `Yandex.Music_07.06.26_autoPlay_basic.apk` (2026.06.07 build 5544)
-- Earlier foundation mentioned by Alfa_devil: mod by **Vildanoff**
-- This fork: Tank 300 steering-wheel double-skip fix
+Подпись — debug keystore.
 
-## Disclaimer
+## Откуда сборка
 
-Unofficial modification. Not affiliated with Yandex. Requires a valid Yandex Music subscription. Use at your own risk.
+- Основа: **[Яндекс Музыка для ГУ на Андроид (autoPlay)](https://4pda.to/forum/index.php?showtopic=1116072)**, автор **Alfa_devil**  
+  Сборка: `Yandex.Music_07.06.26_autoPlay_basic.apk` (07.06.2026, build 5544)
+- Более ранняя основа, о которой писал Alfa_devil: мод **Vildanoff**
+- Этот форк: задержка двойного next/prev с руля Tank 300 и пропуск треков с меткой ИИ
+
+## Важно
+
+Неофициальная модификация. К Яндексу не относится. Нужна действующая подписка Яндекс Музыки. Используйте на свой риск.
